@@ -7,6 +7,7 @@ from telegram.ext import ContextTypes
 from bot.services.ip_lookup import lookup_ip
 from bot.services.dns_lookup import lookup_dns
 from bot.services.whois_lookup import lookup_whois
+from bot.services.port_scanner import scan_subnet, COMMON_PORTS
 from bot.formatters import format_ip_result, format_dns_result, format_whois_result
 from bot.rate_limiter import RateLimiter
 from bot.database import Database
@@ -22,6 +23,7 @@ WELCOME_TEXT = (
     "/ip &lt;address&gt; — Lookup IP address\n"
     "/domain &lt;name&gt; — DNS + WHOIS lookup\n"
     "/bulk &lt;ip1&gt; &lt;ip2&gt; ... — Bulk IP lookup (max 5)\n"
+    "/subnet &lt;CIDR&gt; — Scan subnet for open ports\n"
     "/history — Your last 10 lookups\n"
     "/help — Show this message"
 )
@@ -144,6 +146,48 @@ async def bulk_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     text = "\n\n{'─' * 30}\n\n".join(results)
     await update.message.reply_text(text, parse_mode="HTML")
+
+
+async def subnet_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user_id = update.effective_user.id
+
+    if not rate_limiter.is_allowed(user_id):
+        await update.message.reply_text("⏳ Rate limit exceeded. Please wait a moment.")
+        return
+
+    if not context.args:
+        await update.message.reply_text(
+            "Usage: /subnet <CIDR>\nExample: /subnet 192.0.2.0/28\nMax /27 (32 hosts)."
+        )
+        return
+
+    cidr = context.args[0].strip()
+
+    await update.message.reply_text(f"🔎 Scanning {cidr}... (this may take up to 30s)")
+
+    try:
+        results = []
+        async for host_result in scan_subnet(cidr, COMMON_PORTS, max_hosts=32):
+            ports_str = ", ".join(str(p) for p in host_result["open_ports"])
+            results.append(f"• <code>{host_result['host']}</code> — {ports_str}")
+
+        if not results:
+            text = f"✅ Scan complete for <code>{cidr}</code>\nNo open ports found on any host."
+        else:
+            text = (
+                f"✅ <b>Scan results for {cidr}</b>\n\n" + "\n".join(results)
+            )
+
+        db_path = context.bot_data.get("db_path", "data/history.db")
+        async with Database(db_path) as db:
+            await db.save_lookup(user_id, "subnet", cidr, f"{len(results)} hosts")
+
+        await update.message.reply_text(text, parse_mode="HTML")
+    except ValueError as e:
+        await update.message.reply_text(f"❌ {e}")
+    except Exception as e:
+        logger.error("Subnet scan failed for %s: %s", cidr, e)
+        await update.message.reply_text("❌ Scan failed. Please try again later.")
 
 
 async def history_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

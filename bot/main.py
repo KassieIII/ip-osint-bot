@@ -10,6 +10,7 @@ from bot.handlers import (
     ip_handler,
     domain_handler,
     bulk_handler,
+    subnet_handler,
     history_handler,
 )
 from bot.database import Database
@@ -41,6 +42,7 @@ def main() -> None:
     app.add_handler(CommandHandler("ip", ip_handler))
     app.add_handler(CommandHandler("domain", domain_handler))
     app.add_handler(CommandHandler("bulk", bulk_handler))
+    app.add_handler(CommandHandler("subnet", subnet_handler))
     app.add_handler(CommandHandler("history", history_handler))
 
     logger.info("Bot started")
