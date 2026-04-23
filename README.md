@@ -1,6 +1,10 @@
 # 🔍 IP OSINT Telegram Bot
 
-A Telegram bot for quick IP address and domain intelligence gathering. Returns geolocation, ISP info, DNS records, and WHOIS data in a clean formatted message.
+![CI](https://github.com/KassieIII/ip-osint-bot/actions/workflows/ci.yml/badge.svg)
+![Python](https://img.shields.io/badge/python-3.11+-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+
+A Telegram bot for quick IP address and domain intelligence gathering. Returns geolocation, ISP info, DNS records, WHOIS data, and subnet port scans in clean formatted messages.
 
 ## Features
 
@@ -9,6 +13,7 @@ A Telegram bot for quick IP address and domain intelligence gathering. Returns g
 - **DNS Lookup** — A, AAAA, MX, NS, TXT records
 - **WHOIS Data** — Registrar, creation date, expiration
 - **Bulk Lookup** — Process multiple IPs/domains at once
+- **Subnet Scanner** — Async port scanning of small CIDR ranges
 - **Rate Limiting** — Prevents abuse with per-user cooldowns
 - **History** — Stores last 10 lookups per user
 
@@ -21,6 +26,8 @@ A Telegram bot for quick IP address and domain intelligence gathering. Returns g
 - ip-api.com + ipwhois for data sources
 
 ## Quick Start
+
+### Local development
 
 ```bash
 # Clone
@@ -36,6 +43,13 @@ cp .env.example .env
 
 # Run
 python -m bot.main
+```
+
+### Docker
+
+```bash
+docker build -t ip-osint-bot .
+docker run -e BOT_TOKEN=your_token_here -v $(pwd)/data:/app/data ip-osint-bot
 ```
 
 ## Environment Variables
@@ -54,6 +68,7 @@ python -m bot.main
 | `/ip <address>` | Lookup IP address |
 | `/domain <name>` | Lookup domain (DNS + WHOIS) |
 | `/bulk <ip1> <ip2> ...` | Bulk IP lookup (max 5) |
+| `/subnet <CIDR>` | Scan subnet for open ports (max /27) |
 | `/history` | Show your last 10 lookups |
 | `/help` | List all commands |
 
