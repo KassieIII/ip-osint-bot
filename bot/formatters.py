@@ -13,7 +13,7 @@ def format_ip_result(data: dict) -> str:
         f"  Coords: {data['lat']}, {data['lon']}",
         f"  Timezone: {data['timezone']}",
         "",
-        f"🏢 <b>Network</b>",
+        "🏢 <b>Network</b>",
         f"  ISP: {data['isp']}",
         f"  Org: {data['org']}",
         f"  ASN: {data['asn']}",

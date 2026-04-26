@@ -13,7 +13,6 @@ from bot.handlers import (
     subnet_handler,
     history_handler,
 )
-from bot.database import Database
 
 load_dotenv()
 
